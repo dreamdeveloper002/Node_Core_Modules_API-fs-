@@ -1,11 +1,50 @@
 //@desc Primary file for the API
 
 //Dependencies
-const http = require('http');
+const http = require('http'),
+      url = require('url'),
+      stringDecoder = require('string_decoder').stringDecoder;
 
 //The server should respond to all requests with a string
 const server = http.createServer(function (req, res) {
-    res.end('Hello World\n');
+
+//Get the URL and parse it
+const parsedUrl = url.parse(req.url, true); 
+
+//Get the path
+const path = parsedUrl.pathname;
+const trimmedPath = path.replace(/^\/+|\/+$/g,''); 
+
+//Get the query string as an object
+const queryStringObject = parsedUrl.query;
+
+// Get the HTTP method
+const method = req.method.toUpperCase();
+
+//Get the headers as an object
+const headers = req.headers;
+
+//Get the payload if there's any 
+const decoder = new stringDecoder('utf-8');
+
+let buffer = '';
+
+req.on('data', function(data) {
+  buffer += decoder.write(data);
+});
+
+req.on('end', function () {
+   buffer = decoder.end();
+
+//Send the response
+res.end('Hello World\n');
+
+//Log the request path
+console.log(`Request recieved with this payload ${buffer}`);
+
+   
+})
+
 });
 
 
