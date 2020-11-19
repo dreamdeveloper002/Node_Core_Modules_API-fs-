@@ -6,8 +6,13 @@ const http = require('http'),
       url = require('url'),
       stringDecoder = require('string_decoder').StringDecoder,
       fs = require('fs'),
+      _data = require('./lib/data')
       config = require('./config');
 
+
+// _data.create('test','newFile',{'foor':'bar'}, function(err) {
+//      console.log(err)
+// })
 
 //Instantiating the HTTP server
 const httpServer = http.createServer(function (req, res) {
