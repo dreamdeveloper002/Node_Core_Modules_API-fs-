@@ -12,12 +12,14 @@ lib.baseDir = path.join(__dirname, "/../.data/");
 
 //Write data to a file
 lib.create = function (dir, file, data, callback) {
+  
   //Open the file for writing
   fs.open(lib.baseDir + dir + "/" + file + ".json", "wx", function (
     err,
     fileDescriptor
   ) {
     if (!err & fileDescriptor) {
+      
       //Convert data to string
       const stringData = JSON.stringify(data);
 
@@ -41,6 +43,7 @@ lib.create = function (dir, file, data, callback) {
   });
 };
 
+
 //Read data from a file
 lib.read = function (dir, file, callback) {
   fs.readFile(lib.baseDir + dir + "/" + file + ".json", "utf8", function (
@@ -51,20 +54,24 @@ lib.read = function (dir, file, callback) {
   });
 };
 
+
 //Update data from a file
 lib.update = function (dir, file, data, callback) {
+ 
   //Open the file for writing
   fs.open(lib.baseDir + dir + "/" + file + ".json", "r+", function (
     err,
     fileDescriptor
   ) {
     if (!err & fileDescriptor) {
+      
       //Convert data to string
       const stringData = JSON.stringify(data);
 
       //Truncate the file
       fs.truncate(fileDescriptor, function (err) {
         if (!err) {
+          
           //Write to file and close it
           fs.writeFile(fileDescriptor, stringData, function (err) {
             if (!err) {
@@ -91,10 +98,12 @@ lib.update = function (dir, file, data, callback) {
   });
 };
 
+
 //Delete a file
 lib.delete = function(dir,file,callback) {
+  
   //Unlink the file
-  fs.unlink(libe.baseDir + dir + "/" + file + ".json",function(err) {
+  fs.unlink(lib.baseDir + dir + "/" + file + ".json",function(err) {
       if(!err) {
            callback(false)
       } else {
@@ -102,6 +111,7 @@ lib.delete = function(dir,file,callback) {
       }
   })
 }
+
 
 //Export the module
 module.exports = lib;

@@ -6,7 +6,7 @@ const http = require('http'),
       url = require('url'),
       stringDecoder = require('string_decoder').StringDecoder,
       fs = require('fs'),
-      _data = require('./lib/data')
+      handlers = require('./lib/handlers'),
       config = require('./config');
 
 
@@ -107,22 +107,6 @@ console.log(`Returning this response : ${statusCode}, ${payloadString}`);
 };
 
 
-//Define the handlers
-const handlers = {};
-
-
-//Not found handler
-handlers.notFound = function (data, callback) {
-  callback(404);
-} 
-
-//ping handler
-handlers.ping = function (data, callback) {
-  
-  //Callback http status code, and a payload object;
-    callback(200);
-  };
-  
 
 //Define a request router
 const router = {
