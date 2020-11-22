@@ -110,6 +110,7 @@ console.log(`Returning this response : ${statusCode}, ${payloadString}`);
 
 //Define a request router
 const router = {
-  'ping' : handlers.ping
+  'ping' : handlers.ping,
+  'users' : handlers.users
 };
 
