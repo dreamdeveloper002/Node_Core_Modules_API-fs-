@@ -12,7 +12,7 @@ lib.baseDir = path.join(__dirname, "/../.data/");
 
 //Write data to a file
 lib.create = function (dir, file, data, callback) {
-  
+   
   //Open the file for writing
   fs.open(lib.baseDir + dir + "/" + file + ".json", "wx", function (
     err,

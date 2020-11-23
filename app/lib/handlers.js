@@ -6,22 +6,22 @@
 const _data = require('./data'),
       helpers = require('./helpers');
 
-//Define the handlers
+//Define the handlers 
 const handlers = {};
 
 //Users
 handlers.users = function (data, callback) {
+   
+  //handlers._users.post(data, callback);
 
-  handlers._users.post(data, callback);
-
-  // const acceptableMethods = ['post','get','delete','put'];
+  const acceptableMethods = ['post','get','delete','put'];
   
-  //  if(!acceptableMethods.indexOf(data.method) > -1 ) {
-  //      handlers._users[data.method](data, callback);
-  //  } else {
+   if(acceptableMethods.indexOf(data.method) > -1 ) {
+       handlers._users[data.method](data, callback);
+   } else {
 
-  //     callback(405, { 'error': 'an error occured'});
-  //  }
+      callback(405, { 'error': 'an error occured'});
+   }
   
 }
 
@@ -32,7 +32,7 @@ handlers._users = {};
 // Required data: firstName, LastName, Phone, Password, tosAgreement
 // Optional data: None
 handlers._users.post = function (data, callback ) {
-
+  
   //Check that all required fields are filled out
   const firstName = typeof(data.payload.firstName) == 'string' && data.payload.firstName.trim().length > 0 ? data.payload.firstName.trim() : false;
   const lastName = typeof(data.payload.lastName) == 'string' && data.payload.lastName.trim().length > 0 ? data.payload.lastName.trim() : false;
@@ -56,19 +56,19 @@ handlers._users.post = function (data, callback ) {
                     'firstName' : firstName,
                     'lastName' : lastName,
                     'phone' : phone,
-                    'password' : hashedPassword,
+                    'hashedPassword' : hashedPassword,
                     'tosAgreement' : true
                   };
 
                     //store the user
-                  _data.create('users', phone,userObject,function(err, data) {
+                  _data.create('users', phone,userObject,function(err) {
                     if (!err) {
                         callback(200)
                     } else {
                       console.log(err)
                       callback(500, {'Error' : 'Couldn\'t create the new user'});
                     }
-                 })
+                 }); 
 
                 } else {
                   callback(500, {'Error' : 'problem hashing the user\'s password'});

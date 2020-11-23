@@ -52,7 +52,7 @@ const trimmedPath = path.replace(/^\/+|\/+$/g,'');
 const queryStringObject = parsedUrl.query;
 
 //Get the HTTP method
-const method = req.method.toUpperCase();
+const method = req.method.toLowerCase();
 
 //Get the headers as an object
 const headers = req.headers;
@@ -65,12 +65,12 @@ let buffer = '';
 req.on('data', function(data) {
   buffer += decoder.write(data);
  
-
+  console.log(buffer)
 });
 
 req.on('end', function () {
-   buffer = decoder.end();
-   
+   buffer += decoder.end();
+  
 
 //handlers each request should go to, if one isn't found, use not found handler
 const choosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
@@ -79,10 +79,11 @@ const choosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trim
 const data = {
   'trimmedPath' : trimmedPath,
   'queryStringObject' : queryStringObject,
-  'method' : method,
+  'method' : method, 
   'headers' : headers,
   'payload' : helpers.parseJsonToObject(buffer)
 };
+
 
 //Route the request to the router specified in the router
 choosenHandler(data, function (statusCode, payload) {
@@ -95,7 +96,7 @@ choosenHandler(data, function (statusCode, payload) {
 
   // convert the payload to a string
   const payloadString = JSON.stringify(payload);
-      
+       
   //Return the response
   res.setHeader('Content-Type','application/json')
   res.writeHead(statusCode).end(payloadString);

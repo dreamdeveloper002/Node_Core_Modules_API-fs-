@@ -25,7 +25,7 @@ helpers.hash  = function (str) {
 helpers.parseJsonToObject = function (str) {
   try {
     const obj = JSON.parse(str);
-    return obj
+    return obj;
     
   } catch (e) {
     
