@@ -7,12 +7,10 @@ const http = require('http'),
       stringDecoder = require('string_decoder').StringDecoder,
       fs = require('fs'),
       handlers = require('./lib/handlers'),
+      helpers = require('./lib/helpers'),
       config = require('./config');
 
 
-// _data.create('test','newFile',{'foor':'bar'}, function(err) {
-//      console.log(err)
-// })
 
 //Instantiating the HTTP server
 const httpServer = http.createServer(function (req, res) {
@@ -66,10 +64,13 @@ let buffer = '';
 
 req.on('data', function(data) {
   buffer += decoder.write(data);
+ 
+
 });
 
 req.on('end', function () {
    buffer = decoder.end();
+   
 
 //handlers each request should go to, if one isn't found, use not found handler
 const choosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
@@ -80,12 +81,12 @@ const data = {
   'queryStringObject' : queryStringObject,
   'method' : method,
   'headers' : headers,
-  'payload' : buffer
+  'payload' : helpers.parseJsonToObject(buffer)
 };
 
 //Route the request to the router specified in the router
 choosenHandler(data, function (statusCode, payload) {
-
+  
    //Use the status code called back by the handler, or the default to 200
   statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
    
@@ -94,7 +95,7 @@ choosenHandler(data, function (statusCode, payload) {
 
   // convert the payload to a string
   const payloadString = JSON.stringify(payload);
-
+      
   //Return the response
   res.setHeader('Content-Type','application/json')
   res.writeHead(statusCode).end(payloadString);
