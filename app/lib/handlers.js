@@ -32,7 +32,7 @@ handlers._users = {};
 // Required data: firstName, LastName, Phone, Password, tosAgreement
 // Optional data: None
 handlers._users.post = function (data, callback ) {
-  
+
   //Check that all required fields are filled out
   const firstName = typeof(data.payload.firstName) == 'string' && data.payload.firstName.trim().length > 0 ? data.payload.firstName.trim() : false;
   const lastName = typeof(data.payload.lastName) == 'string' && data.payload.lastName.trim().length > 0 ? data.payload.lastName.trim() : false;
@@ -81,21 +81,98 @@ handlers._users.post = function (data, callback ) {
          });
 
   }  else {
-     
+    
+    //Missing required field
     callback(400, {'Error': 'missing required fields'})
 
   }
 };
 
 //@desc Users - GET
+//Required data: phone
+//Optional data: none
+//@TODO only let an authenticated user access their object, don't let them access anyone else
 handlers._users.get = function (data, callback ) {
   
+  //Check that the phone number is valid
+  const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+  if(phone) {
+    
+    //Lookup the user
+    _data.read('user', phone, function (err, data) {
+        if(!err & data ) {
+          
+          //Remove the hashed password from the object before returning it to the requester
+          delete data.hashedPassword;
+          callback(200, data);
+        } else {
+          callback(400);
+        }
+    });
+  } else {
+     callback(400, {'Error' : 'Missing required field'});
+  }
 };
 
 
 //@desc Users - PUT
+//Required data: phone
+//Optional data: none
+//@TODO only let an authenticated user update their object, don't let them access anyone else
 handlers._users.put = function (data, callback ) {
-  
+  //Check for the required field
+  const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+
+  //Check for optional fields
+  const firstName = typeof(data.payload.firstName) == 'string' && data.payload.firstName.trim().length > 0 ? data.payload.firstName.trim() : false;
+  const lastName = typeof(data.payload.lastName) == 'string' && data.payload.lastName.trim().length > 0 ? data.payload.lastName.trim() : false;
+  const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
+ 
+  //check if the phone is valid
+  if(phone) {
+
+    //Error if nothing is sent to update
+    if(firstName || lastName || password) {
+       // Lookup the user
+       _data.read('users', phone, function (err, userData) {
+           if(!err && userData) {
+             //Update the fields necessary
+             if(firstName) {
+               userData.firstName = firstName;
+             };
+
+             if(lastName) {
+               userData.lastName = lastName;
+             };
+
+             if(password) {
+               userData.hashedPassword = helpers.hash(password);
+             };
+
+             //Store the new updates
+             _data.update('users', phone, userData, function(err) {
+                if(!err) {
+                  callback(200);
+                } else {
+                  console.log(err);
+                  callback(500, {'Error' : 'Could not update the user'});
+                }
+             });
+
+           } else {
+               callback(400, {'Error' : 'The specified user does not exist'});
+           }
+       });
+    } else {
+            callback(400, {'Error' : 'Missing fields to update'});
+    }
+
+  } else {
+
+      //Missing required field
+    callback(400, {'Error': 'missing required fields'})
+
+  }
 };
 
 //@desc Users - DELETE
