@@ -5,9 +5,11 @@
 //Dependencies
 const _data = require('./data'),
       helpers = require('./helpers');
+      
 
 //Define the handlers 
 const handlers = {};
+
 
 //Users
 handlers.users = function (data, callback) {
@@ -20,10 +22,11 @@ handlers.users = function (data, callback) {
        handlers._users[data.method](data, callback);
    } else {
 
-      callback(405, { 'error': 'an error occured'});
+      callback(405, { 'error':'an error occurred'});
    }
   
 }
+
 
 // @desc Container for the users subMethods
 handlers._users = {};
@@ -66,27 +69,29 @@ handlers._users.post = function (data, callback ) {
                         callback(200)
                     } else {
                       console.log(err)
-                      callback(500, {'Error' : 'Couldn\'t create the new user'});
+                      callback(500, {'Error':'Couldn\'t create the new user'});
                     }
                  }); 
 
                 } else {
-                  callback(500, {'Error' : 'problem hashing the user\'s password'});
+                  callback(500, {'Error':'problem hashing the user\'s password'});
                 }
                   
              } else { 
                //User already exists
-               callback(400, {'Error': 'A user with that phone number already exists'})
+               callback(400, {'Error':'A user with that phone number already exists'})
              }
          });
 
   }  else {
     
     //Missing required field
-    callback(400, {'Error': 'missing required fields'})
+    callback(400, {'Error':'missing required fields'})
 
   }
 };
+
+
 
 //@desc Users - GET
 //Required data: phone
@@ -95,7 +100,7 @@ handlers._users.post = function (data, callback ) {
 handlers._users.get = function (data, callback ) {
   
   //Check that the phone number is valid
-  const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+  const phone = typeof(data.queryStringObject.phone) == 'string' && data.queryStringObject.phone.trim().length == 10 ? data.queryStringObject.phone.trim() : false;
   if(phone) {
     
     //Lookup the user
@@ -106,13 +111,14 @@ handlers._users.get = function (data, callback ) {
           delete data.hashedPassword;
           callback(200, data);
         } else {
-          callback(400);
+          callback(404);
         }
     });
   } else {
-     callback(400, {'Error' : 'Missing required field'});
+     callback(400, {'Error':'Missing required field'});
   }
 };
+
 
 
 //@desc Users - PUT
@@ -155,16 +161,16 @@ handlers._users.put = function (data, callback ) {
                   callback(200);
                 } else {
                   console.log(err);
-                  callback(500, {'Error' : 'Could not update the user'});
+                  callback(500, {'Error':'Could not update the user'});
                 }
              });
 
            } else {
-               callback(400, {'Error' : 'The specified user does not exist'});
+               callback(400, {'Error':'The specified user does not exist'});
            }
        });
     } else {
-            callback(400, {'Error' : 'Missing fields to update'});
+            callback(400, {'Error':'Missing fields to update'});
     }
 
   } else {
@@ -175,15 +181,46 @@ handlers._users.put = function (data, callback ) {
   }
 };
 
+
 //@desc Users - DELETE
+//Required data: phone
+//Optional data: none
+//@TODO only let an authenticated user delete their object, don't let them access anyone else
 handlers._users.delete = function (data, callback ) {
-  
+  //Check for the required field
+  const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+
+  if(phone) {
+    
+    //Lookup the user
+    _data.read('user', phone, function (err, data) {
+        if(!err & data ) {
+          
+        _data.delete('users', phone, function (err) {
+          if(!err) {
+            callback(200);
+          } else {
+             callback(500,{'Error':'Couldn\'t delete specified user'} )
+          }
+          
+        });
+          callback(200, data);
+        } else {
+          callback(400, {'Error':'Couldn\'t find specified user'});
+        }
+    });
+  } else {
+     callback(400, {'Error':'Missing required field'});
+  }
+
 }
+
 
 //@desc Not found handler
 handlers.notFound = function (data, callback) {
   callback(404);
 } 
+
 
 //@desc ping handler
 handlers.ping = function (data, callback) {
@@ -193,7 +230,7 @@ handlers.ping = function (data, callback) {
 };
 
 
-console.log(handlers)
+
 // Export the module 
 module.exports = handlers;
   
