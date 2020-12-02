@@ -5,7 +5,7 @@
 //Dependencies
 const _data = require('./data'),
       helpers = require('./helpers');
-      
+
 
 //Define the handlers 
 const handlers = {};
@@ -14,8 +14,6 @@ const handlers = {};
 //Users
 handlers.users = function (data, callback) {
    
-  //handlers._users.post(data, callback);
-
   const acceptableMethods = ['post','get','delete','put'];
   
    if(acceptableMethods.indexOf(data.method) > -1 ) {
@@ -187,8 +185,9 @@ handlers._users.put = function (data, callback ) {
 //Optional data: none
 //@TODO only let an authenticated user delete their object, don't let them access anyone else
 handlers._users.delete = function (data, callback ) {
+  
   //Check for the required field
-  const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+  const phone = typeof(data.queryStringObject.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
 
   if(phone) {
     
@@ -215,6 +214,89 @@ handlers._users.delete = function (data, callback ) {
 
 }
 
+//Tokens
+handlers.tokens = function (data, callback) {
+   
+  const acceptableMethods = ['post','get','delete','put'];
+  
+   if(acceptableMethods.indexOf(data.method) > -1 ) {
+       handlers._tokens[data.method](data, callback);
+   } else {
+
+      callback(405, { 'error':'an error occurred'});
+   }
+  
+};
+
+// Container for all the tokens method
+handlers._tokens = {};
+
+//@desc Tokens - post
+// Required data: phone, password
+// Optional data: none
+handlers._tokens.post = function (data, callback ) {
+   
+    //Check that all required fields are filled out
+    const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+    const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
+
+    if (phone && password) {
+      //Lookup the user who matches that phone number
+
+      _data.read('users',phone,function(err,userData) {
+        if(!err && userData) {
+          // Hash the sent password, and compare it to the password stored in the user object
+          // Hash the password
+          const hashedPassword = helpers.hash(password); 
+          if(hashedPassword == userData.password) {
+           
+            //If valid, create a new token with a random name and set an expiration date
+            const tokenId = helpers.createRandomString(20);
+
+            const expires = Date.now() + 1000 * 60 * 60;
+            const tokenObject = {
+              'phone' : phone,
+              'id' : tokenId,
+              'expires' : expires
+            };
+
+         // Store the token
+        _data.create('tokens', tokenId, tokenObject, function(err) {
+               if(!err) {
+                 callback(200, tokenObject);
+               } else {
+                 callback(500, {'Error' : 'Could not create the new token'})
+               }
+        });
+          } else {
+
+            callback(400, {'Error' : 'Password did not match the specified password'})
+          }
+        } else {
+          callback(400, {'Error' : 'Could not find the specified user'})
+        }
+        
+      });
+    } else {
+          callback(400, {'Error' : 'Missing require field(s)'});
+    }
+
+};
+
+//@desc Tokens - get
+handlers._tokens.get = function (data, callback ) {
+
+};
+
+//@desc Tokens - put
+handlers._tokens.put = function (data, callback ) {
+
+};
+
+//@desc Tokens - delete
+handlers._tokens.delete = function (data, callback ) {
+
+};
 
 //@desc Not found handler
 handlers.notFound = function (data, callback) {
@@ -229,7 +311,7 @@ handlers.ping = function (data, callback) {
     callback(200);
 };
 
-
+console.log(handlers);
 
 // Export the module 
 module.exports = handlers;
