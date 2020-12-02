@@ -284,13 +284,65 @@ handlers._tokens.post = function (data, callback ) {
 };
 
 //@desc Tokens - get
+// Required data: id
+// Optional data: none
 handlers._tokens.get = function (data, callback ) {
-
+   
+  //Check that the id is valid
+  const id = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
+  if(id) {
+    
+    //Lookup the token
+    _data.read('tokens',id, function (err, tokenData) {
+        if(!err & tokenData ) {
+          callback(200, tokenData);
+        } else {
+          callback(404);
+        }
+    });
+  } else {
+     callback(400, {'Error':'Missing required field'});
+  }
 };
 
 //@desc Tokens - put
+//Required data : id, extend
+//Optional data : none
 handlers._tokens.put = function (data, callback ) {
+  const id = typeof(data.payload.id) == 'string' && data.payload.id.trim().length == 20 ? data.payload.id.trim() : false;
+  const extend = typeof(data.payload.extend) == 'boolean' && data.payload.extend == true ? true : false;
 
+  if(id && extend) {
+         //Lookup the token
+         _data.read('tokens',id,function(err,tokenData) {
+           if(!err && tokenData) {
+               // Check to make sure the token data isn't already expired
+               if(tokenData.expires > Date.now()) {
+                 //Check the expiration an hour from now
+                 tokenData.expires = Date.now() + 1000 * 60 * 60;
+
+                 //Store the new update
+                 _data.update('tokens', id, tokenData, function(err) {
+                      if(!err) {
+                        callback(200);
+                      } else {
+                        callback(500, {'Error' : 'Could not update the token'});
+                      }
+                 })
+
+
+               } else {
+                 callback(400, { 'Error' : 'The token already expired and can\'t be extended'});
+               }
+           } else {
+             callback(400, {'Error' : 'Specified token not found'})
+           }
+         })
+
+  } else {
+    callback(400,  {'Error' : 'Missing required field(s) or field(s) are invalid'});
+  }
+ 
 };
 
 //@desc Tokens - delete
