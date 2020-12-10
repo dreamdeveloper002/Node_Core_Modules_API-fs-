@@ -4,6 +4,7 @@
 
 //Dependencies
 const _data = require('./data'),
+      config = require('../config'),
       helpers = require('./helpers');
 
 
@@ -424,7 +425,104 @@ handlers._tokens.verifyToken = function(id, phone, callback) {
      })
 };
 
-//@desc Not found handler
+
+// Checks
+//Users
+handlers.checks = function (data, callback) {
+   
+  const acceptableMethods = ['post','get','delete','put'];
+  
+   if(acceptableMethods.indexOf(data.method) > -1 ) {
+       handlers._checks[data.method](data, callback);
+   } else {
+
+      callback(405, { 'error':'an error occurred'});
+   }
+  
+}
+
+// Container for all the check methods
+handlers._checks = {}
+
+//@desc Checks - POST
+// Required data: protocol, url, method, successCode, timeoutSeconds
+// Optional data: None
+
+handlers_checks.post = function(data, callback) {
+  //Validate inputs
+  const protocol = typeof(data.payload.protocol) == 'string' && ['https','http'].indexOf(data.payload.protocol) > -1 ? data.payload.protocol : false;
+  const url = typeof(data.payload.url) == 'string' && data.payload.url.trim().length > 0 ? data.payload.url : false;
+  const method = typeof(data.payload.method) == 'string' && ['post','get', 'put', 'delete'].indexOf(data.payload.method) > -1 ? data.payload.method : false;
+  const successCodes = typeof(data.payload.successCodes) == 'object' && data.payload.successCodes instanceof Array && data.payload.successCodes.length > 0 ? data.payload.successCodes: false;
+  const timeoutSeconds = typeof(data.payload.timeoutSeconds) == 'number' && data.payload.timeoutSeconds % 1 === 0  && data.payload.timeoutSeconds >= 1 && data.payload.timeoutSeconds <= 5 ? data.payload.timeoutSeconds : false;
+  
+  if ( protocol && url && method && successCodes && timeoutSeconds) {
+      //Get token from the headers
+    const token = typeof(data.headers.token) == 'string' ? data.headers.token : false
+
+    //Lookup the token by reading the token
+    _data.read('tokens', token, function(err, tokenData) {
+        if(!err && tokenData) {
+          const userPhone = tokenData.phone;
+
+          // Lookup the user data
+          _data.read('users', userPhone, function(err, userData) {
+             if(!err && userData) {
+                const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+                // Verify that the user has less than the number of max-checks-per-user
+                if (userChecks.length < config.maxCheck ) {
+                  // Create a random id for the check
+                  const checkId = helpers.createRandomString(20);
+
+                  //Create the check object and include the user's phone
+                  const checkObject = {
+                    'id' : checkId,
+                    'userPhone': userPhone,
+                    'protocol' : protocol,
+                    'url' : url,
+                    'method' : method,
+                    'successCodes' : successCodes,
+                    'timeOutSeconds' : timeoutSeconds
+                  };
+
+                  _data.create('checks', checkId, checkObject, function (err) {
+                    if(!err) {
+                       //Add the check id to the user's object
+                       userData.checks = userChecks;
+                       userData.checks.push(checkId);
+
+                       //Save the new user data
+                       _data.update('users', userPhone, userData, function(err) {
+                          if(!err) {
+                            //Return the data about the new check
+                            callback(200, checkObject);
+                          } else {
+                            callback(500, {'Error':' could not update the user with the new check'});
+                          }
+                       })
+                    } else {
+                       callback(500, {'Error':'Could not create the new check'});
+                    }
+                    
+                  })
+                } else {
+                  callback(400, {'Error': `The user already reach the maximum number of checks ${config.maxCheck}`})
+                }
+             } else {
+               callback(403)
+             }
+          })
+        } else {
+          callback(403)
+        }
+    })
+
+  } else {
+    callback(400,{'Error':'Missing the required inputs, or inputs are invalid'});
+  }
+}
+
+//@desc Not found handler 
 handlers.notFound = function (data, callback) {
   callback(404);
 } 
