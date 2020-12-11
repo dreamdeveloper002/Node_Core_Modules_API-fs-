@@ -520,7 +520,39 @@ handlers_checks.post = function(data, callback) {
   } else {
     callback(400,{'Error':'Missing the required inputs, or inputs are invalid'});
   }
-}
+};
+
+//Checks - Get
+//Required data : id
+//Optional data : none
+handlers._checks.get = function (data, callback ) { 
+  
+  //Check that the id is valid
+  const id = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
+  if(id) {
+    //Look the check
+    _data.read('checks', id, function(err, checkData) {
+        if(!err & checkData) {
+          //Get the token from the headers
+    const token = typeof(data.headers.token) == 'string' ? data.headers.token : false
+        //Verify that the given token is valid for the user who created the check
+         handlers._tokens.verifyToken(token, checkData.userPhone, function (tokenIsValid) {
+       if(tokenIsValid) {
+           // Return the check data
+           callback(200, checkData)
+        } else {
+           callback(403);
+        }
+    });
+        } else {
+          callback(400);
+        }
+    });
+  } else {
+     callback(400, {'Error':'Missing required field'});
+  }
+};
+
 
 //@desc Not found handler 
 handlers.notFound = function (data, callback) {
