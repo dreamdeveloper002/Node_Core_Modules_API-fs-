@@ -229,17 +229,21 @@ handlers._users.delete = function (data, callback ) {
           var checksToDelete = userChecks.length;
 
           if(checksToDelete > 0 ) {
+
            var checksDeleted = 0;
            var deletionErrors = false;
-            //Loop through checks
+            
+           //Loop through checks
            userChecks.forEach(function(checkId){
-              //Delete the check
+              
+            //Delete the check
               _data.delete('checks', checkId, function(err) {
-                 if(err) {
+                 
+                if(err) {
                   deletionErrors = true;
                  }
                  checksDeleted++;
-                 if (checksDeleted = checksToDelete) {
+                 if (checksDeleted == checksToDelete) {
                      if(!deletionErrors) {
                        callback(200);
                      } else {
