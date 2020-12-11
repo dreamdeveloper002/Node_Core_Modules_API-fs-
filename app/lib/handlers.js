@@ -218,8 +218,8 @@ handlers._users.delete = function (data, callback ) {
     handlers._tokens.verifyToken(token,phone,function (tokenIsValid) {
       if(tokenIsValid) { 
             //Lookup the user
-    _data.read('users', phone, function (err, data) {
-      if(!err && data ) {
+    _data.read('users', phone, function (err, userData) {
+      if(!err && userData ) {
         
       _data.delete('users', phone, function (err) {
         if(!err) {
