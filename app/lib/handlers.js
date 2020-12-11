@@ -109,7 +109,7 @@ handlers._users.get = function (data, callback ) {
         if(tokenIsValid) {
            //Lookup the user
       _data.read('user', phone, function (err, data) {
-      if(!err & data ) {
+      if(!err && data ) {
         
         //Remove the hashed password from the object before returning it to the requester
         delete data.hashedPassword;
@@ -219,17 +219,43 @@ handlers._users.delete = function (data, callback ) {
       if(tokenIsValid) { 
             //Lookup the user
     _data.read('users', phone, function (err, data) {
-      if(!err & data ) {
+      if(!err && data ) {
         
       _data.delete('users', phone, function (err) {
         if(!err) {
-          callback(200);
+         
+          //Delete each of the checks associated with the user
+          var userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+          var checksToDelete = userChecks.length;
+
+          if(checksToDelete > 0 ) {
+           var checksDeleted = 0;
+           var deletionErrors = false;
+            //Loop through checks
+           userChecks.forEach(function(checkId){
+              //Delete the check
+              _data.delete('checks', checkId, function(err) {
+                 if(err) {
+                  deletionErrors = true;
+                 }
+                 checksDeleted++;
+                 if (checksDeleted = checksToDelete) {
+                     if(!deletionErrors) {
+                       callback(200);
+                     } else {
+                       callback(500,{'Error':'Errors encountered while attempting to delete checks'})
+                     }
+                 }
+              })
+           });
+          } else {
+            callback(200);
+          }
+
         } else {
            callback(500,{'Error':'Couldn\'t delete specified user'} )
         }
-        
       });
-        callback(200, data);
       } else {
         callback(400, {'Error':'Couldn\'t find specified user'});
       }
@@ -325,7 +351,7 @@ handlers._tokens.get = function (data, callback ) {
     
     //Lookup the token
     _data.read('tokens',id, function (err, tokenData) {
-        if(!err & tokenData ) {
+        if(!err && tokenData ) {
           callback(200, tokenData);
         } else {
           callback(404);
@@ -388,7 +414,7 @@ handlers._tokens.delete = function (data, callback ) {
     
     //Lookup the user
     _data.read('tokens', id, function (err, data) {
-        if(!err & data ) {
+        if(!err && data ) {
           
         _data.delete('tokens', id, function (err) {
           if(!err) {
@@ -398,7 +424,6 @@ handlers._tokens.delete = function (data, callback ) {
           }
           
         });
-          callback(200, data);
         } else {
           callback(400, {'Error':'Couldn\'t find specified token'});
         }
@@ -630,6 +655,78 @@ handlers._checks.put = function (data, callback) {
   }
   
 }
+
+// Checks - delete
+// Required data: id
+// Optional data: none
+
+//@desc Users - DELETE
+//Required data: phone
+//Optional data: none
+handlers._checks.delete = function (data, callback ) {
+  
+  //Check that the id is valid
+  const id = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
+  
+  if(id) {
+    
+    //Lookup the check
+    _data.read('checks', id, function (err,checkData) {
+       if(!err && checkData) {
+           //Get the token from the headers
+    const token = typeof(data.headers.token) == 'string' ? data.headers.token : false
+
+    //Verify that the given token is valid for the phone number
+    handlers._tokens.verifyToken(token,checkData.userPhone,function (tokenIsValid) {
+      if(tokenIsValid) { 
+
+    //Delete the check data
+    _data.delete('checks', id, function(err) {
+      if(!err) { 
+        //Lookup the user
+    _data.read('users', checkData.userPhone, function (err, userData) {
+      if(!err && userData ) {
+        const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+       
+        //Remove the deleted checks from the list of checks
+        const checkPosition = userChecks.indexOf(id);
+
+        if(checkPosition > -1) {
+            userChecks.splice(checkPosition, 1);
+
+            //Re-save the user's data
+            _data.update('users',checkData.userPhone, userData, function (err) {
+              if(!err) {
+                callback(200);
+              } else {
+                 callback(500,{'Error':'Couldn\'t update the user'} )
+              } 
+            });
+        } else {
+          callback(500,{'Error':'Couldn\'t find the check in the user\'s object, so couldn\'t remove it'});
+        }
+      } else {
+        callback(500, {'Error':'Couldn\'t not find the user who created the check, so Couldn\'t remove the check from the list'});
+      }
+  });
+      } else {
+        callback(500,{'Error':'Couldn\'t delete specified check data'} ) 
+      }
+    })
+       } else {
+        callback(403); 
+      }
+    });
+  
+       } else {
+        callback(400,{'Error' : 'The specified check ID does not exist'});
+       }
+    });
+  } else {
+     callback(400, {'Error':'Missing required field'});
+  }
+}
+
 
 
 
