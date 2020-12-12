@@ -85,7 +85,7 @@ handlers._users.post = function (data, callback ) {
   }  else {
     
     //Missing required field
-    callback(400, {'Error':'missing required fields'})
+    callback(400, {'Error':'missing required field(s)'})
 
   }
 };
@@ -123,7 +123,7 @@ handlers._users.get = function (data, callback ) {
         }
     });
   } else {
-     callback(400, {'Error':'Missing required field'});
+     callback(400, {'Error':'Missing required field(s)'});
   }
 };
 
@@ -195,7 +195,7 @@ handlers._users.put = function (data, callback ) {
   } else {
 
       //Missing required field
-    callback(400, {'Error':'missing required fields'})
+    callback(400, {'Error':'missing required field(s)'})
 
   }
 };
@@ -270,7 +270,7 @@ handlers._users.delete = function (data, callback ) {
     });
   
   } else {
-     callback(400, {'Error':'Missing required field'});
+     callback(400, {'Error':'Missing required field(s)'});
   }
 }
 
@@ -362,7 +362,7 @@ handlers._tokens.get = function (data, callback ) {
         }
     });
   } else {
-     callback(400, {'Error':'Missing required field'});
+     callback(400, {'Error':'Missing required field(s)'});
   }
 };
 
@@ -433,7 +433,7 @@ handlers._tokens.delete = function (data, callback ) {
         }
     });
   } else {
-     callback(400, {'Error':'Missing required field'});
+     callback(400, {'Error':'Missing required field(s)'});
   }
 };
 
@@ -579,7 +579,7 @@ handlers._checks.get = function (data, callback ) {
         }
     });
   } else {
-     callback(400, {'Error':'Missing required field'});
+     callback(400, {'Error':'Missing required field(s)'});
   }
 };
 
@@ -655,7 +655,7 @@ handlers._checks.put = function (data, callback) {
         callback(400,{'Error' : 'Missing fields to update'});
       }
   } else {
-    callback(400,{'Error' : 'Missing required field'});
+    callback(400,{'Error' : 'Missing required field(s)'});
   }
   
 }
@@ -727,7 +727,7 @@ handlers._checks.delete = function (data, callback ) {
        }
     });
   } else {
-     callback(400, {'Error':'Missing required field'});
+     callback(400, {'Error':'Missing required field(s)'});
   }
 }
 
