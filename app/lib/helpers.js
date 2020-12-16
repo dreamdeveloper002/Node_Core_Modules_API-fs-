@@ -84,7 +84,7 @@ helpers.sendTwilioSms = function (phone,msg,callback) {
 
         //Configure the request details
         const requestDetails = {
-          'protocol' : 'https',
+          'protocol' : 'https:',
           'hostname' : 'api.twilio.com',
           'method' : 'POST',
           'path' : '/2010-04-01/Accounts/'+config.twilio.accountSid+'/Messages.json',

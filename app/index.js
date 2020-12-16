@@ -10,7 +10,10 @@ const http = require('http'),
       helpers = require('./lib/helpers'),
       config = require('./config');
 
-
+//@TODO GET RID OF THIS
+helpers.sendTwilioSms('4151234567','hello',function (err) {
+    console.log(err);
+})
 
 //Instantiating the HTTP server
 const httpServer = http.createServer(function (req, res) {
